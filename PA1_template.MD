@@ -9,12 +9,14 @@ output:
 
 ## Loading and preprocessing the data
 
-```{r}
+
+```r
 # Set global options: show the code, make figure size 4X4
 opts_chunk$set(echo = TRUE, fig.height = 4, fig.width = 4)
 ```
 
-```{r}
+
+```r
 # Load the data
 data <- read.csv("activity.csv",na.strings = "NA",
   	colClasses = c("numeric","Date","numeric"))
@@ -24,45 +26,59 @@ data <- read.csv("activity.csv",na.strings = "NA",
 
 ## What is mean total number of steps taken per day?
 
-```{r P1_hist_no_imputation}
+
+```r
 # Calculate the total number of steps taken per day using 'ddply' in "plyr" package 
 library(plyr)
 daily.step <- ddply(data,.(date),summarize,total.step=sum(steps))
 # Make a histogram of the total number of steps taken each day
 hist(daily.step$total.step,xlab="Total steps taken each day",main="")
+```
+
+![plot of chunk P1_hist_no_imputation](figure/P1_hist_no_imputation-1.png) 
+
+```r
 # Calculate and report the mean and median of the total number of steps taken per day
 mean <- mean(daily.step$total.step,na.rm=TRUE)
 median <- median(daily.step$total.step,na.rm=TRUE)
 ```
-The mean of the total number of steps taken per day is `r as.integer(mean)`.  
-The median of the total number of steps taken per day is `r as.integer(median)`.
+The mean of the total number of steps taken per day is 10766.  
+The median of the total number of steps taken per day is 10765.
 
 
 ## What is the average daily activity pattern?
 
-```{r P2_time_series_no_imputation}
+
+```r
 # Calculate the average stepts by each interval
 meanstep.by.interval <- ddply(data,.(interval),summarize,mean.step=round(mean(steps,na.rm = TRUE),digits = 0))
 # Make a time series plot
 with(data=meanstep.by.interval,
 plot(mean.step~interval,type = "l",ylab="Mean step number")
 )
+```
+
+![plot of chunk P2_time_series_no_imputation](figure/P2_time_series_no_imputation-1.png) 
+
+```r
 # Find the interval which has the maximum average stepts
 max <- arrange(meanstep.by.interval,desc(mean.step))[1,]
 ```
-Interval `r max[1,1]` has the maximum number of steps = `r max[1,2]`
+Interval 835 has the maximum number of steps = 206
 
 
 ## Imputing missing values
 
-```{r}
+
+```r
 # Calculate the total number of missing values in the dataset
 total.na <- sum(is.na(data$steps))
 ```
-The total number of missing values in the datase is `r total.na`.  
+The total number of missing values in the datase is 2304.  
 
 Use the mean steps of each interval to impute the missing data in each corresponding interval
-```{r P3_hist_imputation}
+
+```r
 # Use the mean steps of each interval to impute the missing data
 impute <- merge(data[is.na(data$steps),],meanstep.by.interval,x.by=interval,y.by=interval)[,c(4,3,1)]
 colnames(impute) <- colnames(data)
@@ -74,20 +90,25 @@ data.imputed <- data.imputed[order(data.imputed$date,data.imputed$interval),]
 # Make a histogram of the total number of steps taken each day 
 daily.step.imputed <- ddply(data.imputed,.(date),summarize,total.step=sum(steps))
 hist(daily.step.imputed$total.step,xlab="Total steps taken each day",main="")
+```
 
+![plot of chunk P3_hist_imputation](figure/P3_hist_imputation-1.png) 
+
+```r
 # Calculate the mean and median total number of steps taken per day
 mean2 <- mean(daily.step.imputed$total.step)
 median2 <- median(daily.step.imputed$total.step)
 ```
-The mean of the total number of steps taken per day after imputation is `r as.integer(mean2)`.  
-The median of the total number of steps taken per day  after imputation is `r as.integer(median2)`.  
+The mean of the total number of steps taken per day after imputation is 10765.  
+The median of the total number of steps taken per day  after imputation is 10762.  
 These values do not differ from the estimates from the first part of the assignment.  
 There is very little impact of imputing missing data on the estimates of the total daily number of steps.  
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-```{r P4_panel_plot_imputation}
+
+```r
 # Create a new factor variable with weekdays
 data.imputed <- mutate(data.imputed, day = weekdays(date))
 
@@ -118,4 +139,6 @@ library(lattice)
 xyplot(mean.step ~ interval | day, data = step.interval,
    layout = c(1,2),ylab="Mean step number",type="l")
 ```
+
+![plot of chunk P4_panel_plot_imputation](figure/P4_panel_plot_imputation-1.png) 
 
